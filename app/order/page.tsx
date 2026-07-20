@@ -317,24 +317,17 @@ export default function OrderPage() {
               {/* DESKTOP CART */}
               <div className="hidden xl:block">
                 <OrderSummary
-                  customerName={
-                    customerName
-                  }
-                  cart={cart}
-                  subtotal={subtotal}
-                  service={service}
-                  table={table}
-                  people={people}
-                  increaseQty={
-                    increaseQty
-                  }
-                  decreaseQty={
-                    decreaseQty
-                  }
-                  removeItem={
-                    removeItem
-                  }
-                />
+  customerName={customerName}
+  cart={cart}
+  setCart={setCart}
+  subtotal={subtotal}
+  service={service}
+  table={table}
+  people={people}
+  increaseQty={increaseQty}
+  decreaseQty={decreaseQty}
+  removeItem={removeItem}
+/>
               </div>
             </div>
           </div>
@@ -400,24 +393,17 @@ export default function OrderPage() {
           </div>
 
           <OrderSummary
-            customerName={
-              customerName
-            }
-            cart={cart}
-            subtotal={subtotal}
-            service={service}
-            table={table}
-            people={people}
-            increaseQty={
-              increaseQty
-            }
-            decreaseQty={
-              decreaseQty
-            }
-            removeItem={
-              removeItem
-            }
-          />
+  customerName={customerName}
+  cart={cart}
+  setCart={setCart}
+  subtotal={subtotal}
+  service={service}
+  table={table}
+  people={people}
+  increaseQty={increaseQty}
+  decreaseQty={decreaseQty}
+  removeItem={removeItem}
+/>
         </div>
       </div>
     </main>

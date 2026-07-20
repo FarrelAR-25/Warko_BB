@@ -54,10 +54,10 @@ export default function Home() {
 
             <div className="flex gap-4 flex-wrap">
               <a
-                href="/menu"
+                href="/order"
                 className="bg-[#2563EB] text-white px-7 py-4 rounded-full hover:scale-105 transition duration-300 shadow-xl inline-block"
               >
-                Explore Menu
+                Order Now
               </a>
 
               <a

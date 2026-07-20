@@ -66,10 +66,10 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {/* ORDER BUTTON */}
           <a
-            href="/order"
+            href="/menu"
             className="hidden md:flex bg-[#2563EB] text-white px-5 py-2 rounded-full hover:scale-105 transition duration-300 shadow-lg"
           >
-            Order Now
+            Explore Menu
           </a>
 
           {/* MOBILE BUTTON */}

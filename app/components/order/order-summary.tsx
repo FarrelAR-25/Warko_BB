@@ -1,13 +1,7 @@
 "use client";
 
-import {
-  useState,
-} from "react";
-
-import {
-  ShoppingBag,
-} from "lucide-react";
-
+import { useState } from "react";
+import { ShoppingBag } from "lucide-react";
 import {
   addDoc,
   collection,
@@ -15,40 +9,27 @@ import {
 } from "firebase/firestore";
 
 import { db } from "../../lib/firebase";
-
 import CartItem from "./cart-item";
-
-import PaymentModal from "../payment/payment-modal";
 
 interface Props {
   customerName: string;
-
   cart: any[];
-
+  setCart: React.Dispatch<
+    React.SetStateAction<any[]>
+  >;
   subtotal: number;
-
   service: string;
-
   table: string;
-
   people: string;
-
-  increaseQty: (
-    id: number
-  ) => void;
-
-  decreaseQty: (
-    id: number
-  ) => void;
-
-  removeItem: (
-    id: number
-  ) => void;
+  increaseQty: (id: number) => void;
+  decreaseQty: (id: number) => void;
+  removeItem: (id: number) => void;
 }
 
 export default function OrderSummary({
   customerName,
   cart,
+  setCart,
   subtotal,
   service,
   table,
@@ -57,336 +38,461 @@ export default function OrderSummary({
   decreaseQty,
   removeItem,
 }: Props) {
-  // PAYMENT MODAL
-  const [openPayment, setOpenPayment] =
+  const [loading, setLoading] =
     useState(false);
 
-  // ORDER ID
-  const [generatedOrderId, setGeneratedOrderId] =
-    useState("");
+  // ==========================
+  // VALIDASI
+  // ==========================
 
-  // VALIDATION
   const validateOrder = () => {
-    if (!customerName) {
-      alert(
-        "Masukkan nama pemesan"
-      );
-
+    if (!customerName.trim()) {
+      alert("Masukkan nama pemesan.");
       return false;
     }
 
     if (cart.length === 0) {
-      alert("Cart kosong");
-
+      alert("Cart masih kosong.");
       return false;
     }
 
     return true;
   };
 
+  // ==========================
   // GENERATE ORDER ID
-  const generateOrderId =
-    async () => {
-      const snapshot =
-        await getDocs(
-          collection(
-            db,
-            "orders"
-          )
-        );
+  // ==========================
 
-      const totalOrders =
-        snapshot.size + 1;
+const generateOrderId = async () => {
 
-      return `WBB-${String(
-        totalOrders
-      ).padStart(3, "0")}`;
-    };
+  const snapshot =
+    await getDocs(
+      collection(db, "orders")
+    );
 
-  // SAVE ORDER
-  const saveOrder =
-    async (
-      paymentMethod: string,
-      paymentStatus: string
-    ) => {
-      try {
+  const numbers =
+    snapshot.docs
+      .map((doc) => {
+
         const orderId =
-          await generateOrderId();
+          doc.data().orderId;
 
-        await addDoc(
-          collection(
-            db,
-            "orders"
-          ),
-          {
-            orderId,
+        if (!orderId)
+          return null;
 
-            customerName,
+        const number =
+          parseInt(
+            orderId.replace(
+              "WBB-",
+              ""
+            )
+          );
 
-            table,
+        return isNaN(number)
+          ? null
+          : number;
 
-            people,
+      })
+      .filter(
+        (n): n is number =>
+          n !== null
+      )
+      .sort(
+        (a, b) => a - b
+      );
 
-            service,
+  let next = 1;
 
-            paymentMethod,
+  for (const n of numbers) {
 
-            paymentStatus,
+    if (n === next) {
 
-            items: cart.map(
-              (item) => ({
-                id: item.id,
+      next++;
 
-                name:
-                  item.name,
+    } else {
 
-                qty: item.qty,
+      break;
 
-                price:
-                  item.price,
+    }
 
-                image:
-                  item.image,
-              })
-            ),
+  }
 
-            total: subtotal,
+  return `WBB-${String(next).padStart(3, "0")}`;
 
-            status:
-              "Pending",
+};
 
-            createdAt:
-              new Date(),
-          }
-        );
+  // ==========================
+  // SIMPAN ORDER
+  // ==========================
 
-        return orderId;
-      } catch (error) {
-        console.error(error);
+ const saveOrder = async (
+  orderId: string,
+  midtransOrderId: string | null,
+  paymentMethod: string,
+  paymentStatus: string,
+  transactionId?: string
+) => {
+    await addDoc(
+      collection(db, "orders"),
+      {
+        orderId,
 
-        alert(
-          "Gagal mengirim order"
-        );
+        midtransOrderId,
 
-        return null;
+        transactionId:
+          transactionId ?? null,
+
+        customerName,
+
+        table,
+
+        people,
+
+        service,
+
+        paymentMethod,
+
+        paymentStatus,
+
+        status: "Pending",
+
+        total: subtotal,
+
+        items: cart.map(
+          (item) => ({
+            id: item.id,
+            name: item.name,
+            qty: item.qty,
+            price: item.price,
+            image: item.image,
+          })
+        ),
+
+        createdAt:
+          new Date(),
       }
-    };
+    );
+  };
 
-  // CASH CHECKOUT
+  // ==========================
+  // CASH
+  // ==========================
+
   const handleCashCheckout =
     async () => {
       if (!validateOrder())
         return;
 
-      const orderId =
-        await saveOrder(
-          "Cash",
-          "Pending"
-        );
+      setLoading(true);
 
-      if (!orderId) return;
+      try {
+  const orderId = await generateOrderId();
 
-      alert(
-        `Order ${orderId} berhasil dikirim 🚀`
-      );
+  await saveOrder(
+    orderId,
+    null,
+    "Cash",
+    "Pending"
+  );
 
-      window.location.reload();
+  alert(`Order ${orderId} berhasil dibuat`);
+
+  setCart([]);
+
+} catch (error) {
+
+  console.error(error);
+
+  alert("Gagal membuat order.");
+
+} finally {
+
+  setLoading(false);
+
+}
     };
 
-  // OPEN QRIS
+  // ==========================
+  // MIDTRANS
+  // ==========================
+
   const handleOpenQris =
     async () => {
       if (!validateOrder())
         return;
 
-      const orderId =
-        await generateOrderId();
+      setLoading(true);
 
-      setGeneratedOrderId(
-        orderId
-      );
+      try {
+        const orderId =
+          await generateOrderId();
 
-      setOpenPayment(true);
-    };
+      const midtransOrderId =
+`${orderId}-${Date.now()}`;
 
-  // QRIS SUCCESS
-  const handleQrisSuccess =
-    async () => {
-      const orderId =
-        await saveOrder(
-          "QR",
-          "Paid"
-        );
+const response =
+await fetch(
+"/api/midtrans",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+},
+body:JSON.stringify({
 
-      if (!orderId) return;
+orderId:
+midtransOrderId,
 
-      setOpenPayment(false);
+total:subtotal,
 
-      alert(
-        `Pembayaran QR berhasil 🚀`
-      );
+customerName,
 
-      window.location.reload();
-    };
+}),
+});
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ??
+              "Gagal membuat transaksi."
+          );
+        }
+
+        if (!window.snap) {
+          throw new Error(
+            "Snap Midtrans belum dimuat."
+          );
+        }
+
+window.snap.pay(data.token, {
+  onSuccess: async (result: any) => {
+    await saveOrder(
+      orderId,
+      midtransOrderId,
+      "QRIS",
+      "Paid",
+      result.transaction_id
+    );
+
+    alert("Pembayaran berhasil");
+
+    setCart([]);
+
+    window.location.reload();
+  },
+
+  onPending: async (result: any) => {
+    await saveOrder(
+      orderId,
+      midtransOrderId,
+      "QRIS",
+      "Pending",
+      result.transaction_id
+    );
+
+    alert("Menunggu pembayaran");
+  },
+
+  onError: () => {
+    alert("Pembayaran gagal");
+  },
+
+  onClose: () => {
+    console.log("Popup ditutup");
+  },
+});
+
+} catch (error) {
+
+  console.error(error);
+
+  alert("Terjadi kesalahan saat membuat transaksi.");
+
+} finally {
+
+  setLoading(false);
+
+}
+
+};
 
   return (
-    <>
-      <div className="bg-white rounded-[24px] p-4 shadow-lg border border-blue-100 xl:sticky xl:top-28">
-        {/* HEADER */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-11 h-11 rounded-2xl bg-[#EFF6FF] flex items-center justify-center">
-            <ShoppingBag
-              className="text-[#2563EB]"
-              size={20}
-            />
-          </div>
+    <div className="bg-white rounded-[24px] p-4 shadow-lg border border-blue-100 xl:sticky xl:top-28">
 
-          <div>
-            <p className="text-xs text-slate-400 uppercase tracking-wide">
-              Your Order
-            </p>
+      {/* HEADER */}
 
-            <h2 className="text-xl font-black text-[#1E293B]">
-              Cart Summary
-            </h2>
-          </div>
+      <div className="flex items-center gap-3 mb-5">
+
+        <div className="w-11 h-11 rounded-2xl bg-[#EFF6FF] flex items-center justify-center">
+
+          <ShoppingBag
+            className="text-[#2563EB]"
+            size={20}
+          />
+
         </div>
 
-        {/* CART ITEMS */}
-        <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-          {cart.length ===
-            0 && (
-            <div className="bg-[#F8FAFC] border border-dashed border-blue-100 rounded-2xl p-8 text-center">
-              <div className="w-14 h-14 rounded-full bg-[#DBEAFE] flex items-center justify-center mx-auto mb-4">
-                <ShoppingBag className="text-[#2563EB]" />
-              </div>
+        <div>
 
-              <h3 className="font-bold text-sm text-[#1E293B] mb-2">
-                Cart Masih Kosong
-              </h3>
+          <p className="text-xs text-slate-400 uppercase tracking-wide">
+            Your Order
+          </p>
 
-              <p className="text-xs text-slate-400">
-                Tambahkan menu
-                favoritmu terlebih
-                dahulu
-              </p>
+          <h2 className="text-xl font-black text-[#1E293B]">
+            Cart Summary
+          </h2>
+
+        </div>
+
+      </div>
+
+      {/* CART */}
+
+      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+
+        {cart.length === 0 ? (
+
+          <div className="bg-[#F8FAFC] border border-dashed border-blue-100 rounded-2xl p-8 text-center">
+
+            <div className="w-14 h-14 rounded-full bg-[#DBEAFE] flex items-center justify-center mx-auto mb-4">
+
+              <ShoppingBag className="text-[#2563EB]" />
+
             </div>
-          )}
 
-          {cart.map((item) => (
+            <h3 className="font-bold text-sm text-[#1E293B]">
+              Cart Masih Kosong
+            </h3>
+
+            <p className="text-xs text-slate-400 mt-2">
+              Tambahkan menu favoritmu terlebih dahulu.
+            </p>
+
+          </div>
+
+        ) : (
+
+          cart.map((item) => (
+
             <CartItem
               key={item.id}
               item={item}
-              increaseQty={
-                increaseQty
-              }
-              decreaseQty={
-                decreaseQty
-              }
-              removeItem={
-                removeItem
-              }
+              increaseQty={increaseQty}
+              decreaseQty={decreaseQty}
+              removeItem={removeItem}
             />
-          ))}
-        </div>
 
-        {/* TOTAL */}
-        <div className="border-t border-dashed border-slate-200 mt-5 pt-5">
-          {/* INFO */}
-          <div className="space-y-3 mb-5">
-            <div className="flex items-center justify-between text-sm">
-              <p className="text-slate-500">
-                Customer
-              </p>
+          ))
 
-              <p className="font-semibold text-[#1E293B]">
-                {customerName ||
-                  "-"}
-              </p>
-            </div>
+        )}
 
-            <div className="flex items-center justify-between text-sm">
-              <p className="text-slate-500">
-                Table
-              </p>
-
-              <p className="font-semibold text-[#1E293B]">
-                {table}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <p className="text-slate-500">
-                Service
-              </p>
-
-              <p className="font-semibold text-[#1E293B]">
-                {service}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <p className="text-slate-500">
-                People
-              </p>
-
-              <p className="font-semibold text-[#1E293B]">
-                {people}
-              </p>
-            </div>
-          </div>
-
-          {/* TOTAL BOX */}
-          <div className="bg-gradient-to-r from-[#2563EB] to-blue-500 rounded-2xl p-4 text-white mb-5">
-            <p className="text-blue-100 text-xs uppercase tracking-wide mb-2">
-              Total Payment
-            </p>
-
-            <h2 className="text-2xl font-black">
-              Rp{" "}
-              {subtotal.toLocaleString()}
-            </h2>
-          </div>
-
-          {/* PAYMENT */}
-          <div className="space-y-3">
-            {/* CASH */}
-            <button
-              onClick={
-                handleCashCheckout
-              }
-              className="w-full bg-slate-900 hover:bg-black text-white py-3 rounded-2xl font-semibold transition shadow-lg hover:shadow-xl"
-            >
-              Bayar ke Kasir
-            </button>
-
-            {/* QRIS */}
-            <button
-              onClick={
-                handleOpenQris
-              }
-              className="w-full bg-gradient-to-r from-[#2563EB] to-blue-500 hover:opacity-90 text-white py-3 rounded-2xl font-semibold transition shadow-lg hover:shadow-xl"
-            >
-              Bayar dengan QR
-            </button>
-          </div>
-        </div>
       </div>
 
-      {/* PAYMENT MODAL */}
-      <PaymentModal
-        open={openPayment}
-        onClose={() =>
-          setOpenPayment(false)
-        }
-        total={subtotal}
-        orderId={
-          generatedOrderId
-        }
-        onSuccess={
-          handleQrisSuccess
-        }
-      />
-    </>
+      {/* TOTAL */}
+
+      <div className="border-t border-dashed border-slate-200 mt-5 pt-5">
+
+        <div className="space-y-3 mb-5">
+
+          <div className="flex justify-between text-sm">
+
+            <span className="text-slate-500">
+              Customer
+            </span>
+
+            <span className="font-semibold">
+              {customerName || "-"}
+            </span>
+
+          </div>
+
+          <div className="flex justify-between text-sm">
+
+            <span className="text-slate-500">
+              Table
+            </span>
+
+            <span className="font-semibold">
+              {table}
+            </span>
+
+          </div>
+
+          <div className="flex justify-between text-sm">
+
+            <span className="text-slate-500">
+              Service
+            </span>
+
+            <span className="font-semibold">
+              {service}
+            </span>
+
+          </div>
+
+          <div className="flex justify-between text-sm">
+
+            <span className="text-slate-500">
+              People
+            </span>
+
+            <span className="font-semibold">
+              {people}
+            </span>
+
+          </div>
+
+        </div>
+
+        <div className="bg-gradient-to-r from-[#2563EB] to-blue-500 rounded-2xl p-4 text-white mb-5">
+
+          <p className="text-blue-100 text-xs uppercase tracking-wide">
+            Total Payment
+          </p>
+
+          <h2 className="text-2xl font-black mt-2">
+            Rp {subtotal.toLocaleString("id-ID")}
+          </h2>
+
+        </div>
+
+        <div className="space-y-3">
+
+          <button
+            onClick={handleCashCheckout}
+            disabled={loading}
+            className={`w-full py-3 rounded-2xl font-semibold transition ${
+              loading
+                ? "bg-slate-400 cursor-not-allowed"
+                : "bg-slate-900 hover:bg-black text-white"
+            }`}
+          >
+            {loading
+              ? "Memproses..."
+              : "Bayar ke Kasir"}
+          </button>
+
+          <button
+            onClick={handleOpenQris}
+            disabled={loading}
+            className={`w-full py-3 rounded-2xl font-semibold text-white transition ${
+              loading
+                ? "bg-blue-300 cursor-not-allowed"
+                : "bg-gradient-to-r from-[#2563EB] to-blue-500 hover:opacity-90"
+            }`}
+          >
+            {loading
+              ? "Membuka Midtrans..."
+              : "Bayar dengan QRIS"}
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
   );
+
 }
