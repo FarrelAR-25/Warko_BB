@@ -1,21 +1,51 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Star,
-  MapPin,
-  Clock3,
-} from "lucide-react";
+import { Star, MapPin, Clock3 } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
 
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
 
-import {
-  menus,
-  gallery,
-} from "./data/data";
+import "swiper/css";
+
+import { gallery } from "./data/data";
+import { db } from "./lib/firebase";
+
+interface Menu {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  image: string;
+  price: number;
+}
 
 export default function Home() {
+  const [menus, setMenus] = useState<Menu[]>([]);
+
+  useEffect(() => {
+    const fetchMenus = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "menus"));
+
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Menu, "id">),
+        }));
+
+        setMenus(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchMenus();
+  }, []);
+
   return (
     <main className="bg-[#F8FAFC] text-[#1E293B] overflow-hidden">
       {/* NAVBAR */}
@@ -114,43 +144,62 @@ export default function Home() {
             </p>
 
             <h2 className="text-4xl font-bold mt-3">
-              Our Popular Drinks
+              Our Popular Menu
             </h2>
           </div>
 
-          {/* CARDS */}
-          <div className="grid md:grid-cols-3 gap-8">
-            {menus.map((menu, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white rounded-[35px] overflow-hidden shadow-lg hover:shadow-2xl"
-              >
-                <img
-                  src={menu.image}
-                  alt={menu.name}
-                  className="h-72 w-full object-cover"
-                />
+          {/* CAROUSEL */}
+<Swiper
+  modules={[Autoplay]}
+  slidesPerView={1.2}
+  spaceBetween={20}
+  loop={true}
+  speed={1000}
+  autoplay={{
+    delay: 2000,
+    disableOnInteraction: false,
+  }}
+  breakpoints={{
+    640: {
+      slidesPerView: 2,
+    },
+    768: {
+      slidesPerView: 3,
+    },
+    1024: {
+      slidesPerView: 4,
+    },
+    1280: {
+      slidesPerView: 5,
+    },
+  }}
+>
+  {menus.map((menu) => (
+    <SwiperSlide key={menu.id}>
+      <motion.a
+        href="/order"
+        whileHover={{ scale: 1.03 }}
+        className="bg-white rounded-[30px] overflow-hidden shadow-lg block"
+      >
+        <img
+          src={menu.image}
+          alt={menu.name}
+          className="w-full h-64 object-cover"
+        />
 
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold mb-2">
-                    {menu.name}
-                  </h3>
+        <div className="p-5">
+          <p className="text-xs uppercase text-[#2563EB] font-semibold">
+            {menu.category}
+          </p>
 
-                  <div className="flex justify-between items-center">
-                    <p className="text-[#2563EB] font-bold text-xl">
-                      {menu.price}
-                    </p>
-
-                    <button className="bg-[#2563EB] text-white px-5 py-2 rounded-full hover:scale-105 transition">
-                      Order
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <h3 className="text-xl font-bold mt-2 truncate">
+          {menu.name}
+        </h3>
+        </div>
+      </motion.a>
+    </SwiperSlide>
+  ))}
+</Swiper>
         </div>
       </section>
 
