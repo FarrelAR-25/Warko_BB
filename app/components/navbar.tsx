@@ -41,7 +41,7 @@ export default function Navbar() {
           </a>
 
           <a
-            href="/menu"
+            href="/#menu"
             className="hover:text-[#2563EB] transition"
           >
             Menu

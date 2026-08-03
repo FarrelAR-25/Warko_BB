@@ -463,11 +463,9 @@ export default function AdminMenuPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
           {menus.map((menu) => (
             <div
-              key={
-                menu.firestoreId
-              }
-              className="group bg-white/80 backdrop-blur-md border border-white/50 rounded-[24px] overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition"
-            >
+  key={menu.firestoreId}
+  className="group bg-white/80 backdrop-blur-md border border-white/50 rounded-[24px] overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition flex flex-col"
+>
               {/* IMAGE */}
               <div className="relative overflow-hidden">
                 <img
@@ -487,9 +485,9 @@ export default function AdminMenuPage() {
               </div>
 
               {/* CONTENT */}
-              <div className="p-4">
+              <div className="p-4 flex flex-col flex-1">
                 {/* INFO */}
-                <div className="mb-4">
+                <div className="mb-4 flex-1">
                   <h2 className="font-black text-sm md:text-lg text-[#1E293B] line-clamp-1">
                     {menu.name}
                   </h2>
@@ -500,14 +498,12 @@ export default function AdminMenuPage() {
                   </p>
 
                   <p className="text-slate-500 text-[11px] md:text-sm mt-2 line-clamp-2">
-                    {
-                      menu.description
-                    }
+                    {menu.description || "\u00A0"}
                   </p>
                 </div>
 
                 {/* ACTION */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 mt-auto">
                   {/* EDIT */}
                   <button
                     onClick={() =>
