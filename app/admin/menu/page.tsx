@@ -149,24 +149,17 @@ export default function AdminMenuPage() {
 
         // ADD
         else {
-          await addDoc(
-            collection(
-              db,
-              "menus"
-            ),
-            {
-              name,
-
-              price:
-                Number(price),
-
-              category,
-
-              image,
-
-              description,
-            }
-          );
+         await addDoc(
+  collection(db, "menus"),
+  {
+    name,
+    price: Number(price),
+    category,
+    image,
+    description,
+    soldOut: false,
+  }
+);
 
           alert(
             "Menu berhasil ditambahkan 🚀"
@@ -210,6 +203,24 @@ export default function AdminMenuPage() {
         );
       }
     };
+
+    // TOGGLE SOLD OUT
+const toggleSoldOut = async (
+  id: string,
+  currentStatus: boolean
+) => {
+  try {
+    await updateDoc(
+      doc(db, "menus", id),
+      {
+        soldOut: !currentStatus,
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    alert("Gagal mengubah status menu");
+  }
+};
 
   // EDIT MENU
   const editMenu = (
@@ -474,6 +485,15 @@ export default function AdminMenuPage() {
                   className="w-full h-36 md:h-44 object-cover group-hover:scale-105 transition duration-500"
                 />
 
+                {/* SOLD OUT */}
+  {menu.soldOut && (
+    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+      <div className="bg-red-500 text-white px-4 py-2 rounded-full font-black text-sm shadow-lg">
+        SOLD OUT
+      </div>
+    </div>
+  )}
+
                 {/* CATEGORY */}
                 <div className="absolute top-3 left-3">
                   <div className="bg-white/90 backdrop-blur-md text-[#2563EB] px-3 py-1 rounded-full text-[10px] md:text-xs font-semibold shadow-md">
@@ -503,39 +523,50 @@ export default function AdminMenuPage() {
                 </div>
 
                 {/* ACTION */}
-                <div className="grid grid-cols-2 gap-2 mt-auto">
-                  {/* EDIT */}
-                  <button
-                    onClick={() =>
-                      editMenu(
-                        menu
-                      )
-                    }
-                    className="bg-[#2563EB] hover:bg-blue-700 text-white py-2.5 rounded-2xl transition flex items-center justify-center gap-2 text-sm font-semibold"
-                  >
-                    <Pencil
-                      size={16}
-                    />
+<div className="grid grid-cols-2 gap-2 mt-auto">
 
-                    Edit
-                  </button>
+  {/* SOLD OUT */}
+  <button
+    onClick={() =>
+      toggleSoldOut(
+        menu.firestoreId,
+        menu.soldOut === true
+      )
+    }
+    className={`col-span-2 py-2.5 rounded-2xl transition flex items-center justify-center gap-2 text-sm font-semibold ${
+      menu.soldOut
+        ? "bg-green-500 hover:bg-green-600 text-white"
+        : "bg-orange-500 hover:bg-orange-600 text-white"
+    }`}
+  >
+    {menu.soldOut ? "✓ Available" : "Sold Out"}
+  </button>
 
-                  {/* DELETE */}
-                  <button
-                    onClick={() =>
-                      deleteMenu(
-                        menu.firestoreId
-                      )
-                    }
-                    className="bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-2xl transition flex items-center justify-center gap-2 text-sm font-semibold"
-                  >
-                    <Trash2
-                      size={16}
-                    />
+  {/* EDIT */}
+  <button
+    onClick={() =>
+      editMenu(menu)
+    }
+    className="bg-[#2563EB] hover:bg-blue-700 text-white py-2.5 rounded-2xl transition flex items-center justify-center gap-2 text-sm font-semibold"
+  >
+    <Pencil size={16} />
+    Edit
+  </button>
 
-                    Delete
-                  </button>
-                </div>
+  {/* DELETE */}
+  <button
+    onClick={() =>
+      deleteMenu(
+        menu.firestoreId
+      )
+    }
+    className="bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-2xl transition flex items-center justify-center gap-2 text-sm font-semibold"
+  >
+    <Trash2 size={16} />
+    Delete
+  </button>
+
+</div>
               </div>
             </div>
           ))}

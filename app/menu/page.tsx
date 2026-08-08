@@ -164,14 +164,7 @@ export default function MenuPage() {
                 </div>
               </div>
 
-              {/* IMAGE */}
-              <div className="flex justify-center">
-                <img
-                  src="/cup.png"
-                  alt="cup"
-                  className="w-[130px] object-contain"
-                />
-              </div>
+        
             </div>
           </motion.div>
         </div>
