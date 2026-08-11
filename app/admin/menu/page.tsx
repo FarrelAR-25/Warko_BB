@@ -292,7 +292,7 @@ const toggleSoldOut = async (
           </h1>
 
           <p className="text-slate-500 mt-3 text-sm">
-            Kelola menu cafe realtime
+            Kelola Menu Secara Real-Time
           </p>
         </div>
 
