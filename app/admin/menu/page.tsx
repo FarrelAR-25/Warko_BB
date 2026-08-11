@@ -373,6 +373,10 @@ const toggleSoldOut = async (
               </option>
 
               <option>
+                Makanan
+              </option>
+
+              <option>
                 Snack
               </option>
             </select>
