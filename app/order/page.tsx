@@ -267,6 +267,7 @@ export default function OrderPage() {
                     "Coffee",
                     "Non Coffee",
                     "Snack",
+                    "Makanan",
                   ].map((item) => (
                     <button
                       key={item}
