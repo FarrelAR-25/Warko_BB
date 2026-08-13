@@ -263,6 +263,7 @@ export default function OrderPage() {
                 {/* CATEGORY */}
                 <div className="flex gap-3 mb-5 overflow-x-auto pb-1">
                   {[
+                    "ALL",
                     "Signature Coffee",
                     "Signature Non Coffee",
                     "Kopi Sachet",
