@@ -263,11 +263,12 @@ export default function OrderPage() {
                 {/* CATEGORY */}
                 <div className="flex gap-3 mb-5 overflow-x-auto pb-1">
                   {[
-                    "All",
-                    "Coffee",
-                    "Non Coffee",
-                    "Snack",
+                    "Signature Coffee",
+                    "Signature Non Coffee",
+                    "Kopi Sachet",
+                    "Minuman Lainnya",
                     "Makanan",
+                    "Snack",
                   ].map((item) => (
                     <button
                       key={item}

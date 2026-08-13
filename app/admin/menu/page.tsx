@@ -365,11 +365,19 @@ const toggleSoldOut = async (
               className="bg-[#F8FAFC] border border-blue-100 rounded-2xl px-4 py-3 outline-none text-sm"
             >
               <option>
-                Coffee
+                Signature Coffee
               </option>
 
               <option>
-                Non Coffee
+                Signature Non Coffee
+              </option>
+
+              <option>
+                Kopi Sachet
+              </option>
+
+              <option>
+                Minuman Lainnya
               </option>
 
               <option>
